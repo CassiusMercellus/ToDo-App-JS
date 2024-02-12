@@ -6,6 +6,25 @@ const todoCount = document.getElementById("todoCount");
 const addButton = document.querySelector(".btn");
 const deleteButton = document.getElementById("deleteButton");
 
+const items = document.querySelectorAll(".todoList");
+const scrolls = document.querySelectorAll(".scroll");
+
+const initSortableList = (e) => {
+  e.preventDefault();
+  const draggingItem = sortableList.querySelector(".dragging");
+  const siblings = [...sortableList.querySelectorAll(".todoList:not(.dragging)")];
+
+  let nextSibling = siblings.find((sibling) => {
+    return e.clientY <= sibling.offsetTop + sibling.offsetHeight / 2;
+  });
+
+  sortableList.insertBefore(draggingItem, nextSibling);
+};
+
+scrolls.forEach((scroll) => {
+  scroll.addEventListener("dragover", initSortableList);
+});
+
 // Initialize
 document.addEventListener("DOMContentLoaded", function () {
   addButton.addEventListener("click", addTask);
@@ -29,24 +48,38 @@ function addTask() {
   }
 }
 
+function deleteTask(index) {
+  todo.splice(index, 1);
+  saveToLocalStorage();
+  displayTasks();
+}
+
 function displayTasks() {
   todoList.innerHTML = "";
   todo.forEach((item, index) => {
     const p = document.createElement("p");
     p.innerHTML = `
-      <div class="todo-container">
-        <input type="checkbox" class="todo-checkbox" id="input-${index}" ${
-      item.disabled ? "checked" : ""
-    }>
-        <p id="todo-${index}" class="${
-      item.disabled ? "disabled" : ""
-    }" onclick="editTask(${index})">${item.text}</p>
+      <div class="todoContainer" draggable="true">
+        <div class="todoContainer-left">
+          <input type="checkbox" class="todo-checkbox" id="input-${index}" ${item.disabled ? "checked" : ""}>
+          <p id="todo-${index}" class="${item.disabled ? "disabled" : ""}" onclick="editTask(${index})">${item.text}</p>
+        </div>
+        <div class="todoContainer-right">
+          <button id="editTaskButton" onclick="editTask(${index})">Edit</button>
+          <button id="deleteTaskButton">Delete</button>
+          <button id="dragTaskButton">
+          </button>
+        </div>
       </div>
     `;
     p.querySelector(".todo-checkbox").addEventListener("change", () =>
       toggleTask(index)
     );
     todoList.appendChild(p);
+    const deleteButton = p.querySelector("#deleteTaskButton");
+    deleteButton.addEventListener("click", function () {
+      deleteTask(index);
+    });
   });
   todoCount.textContent = todo.length;
 }
